@@ -1,0 +1,34 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const math_1 = require("../math");
+const util_1 = require("../util");
+exports.forward = (cam, RGB_c) => {
+    const α_0 = (cam.F_L * math_1.abs(RGB_c[0]) / 100) ** 0.42;
+    const α_1 = (cam.F_L * math_1.abs(RGB_c[1]) / 100) ** 0.42;
+    const α_2 = (cam.F_L * math_1.abs(RGB_c[2]) / 100) ** 0.42;
+    const Rʹ_a = 400 * math_1.sign(RGB_c[0]) * α_0 / (α_0 + 27.13);
+    const Gʹ_a = 400 * math_1.sign(RGB_c[1]) * α_1 / (α_1 + 27.13);
+    const Bʹ_a = 400 * math_1.sign(RGB_c[2]) * α_2 / (α_2 + 27.13);
+    const pʹ_2 = 2 * Rʹ_a + Gʹ_a + Bʹ_a / 20;
+    const a = Rʹ_a - 12 * Gʹ_a / 11 + Bʹ_a / 11;
+    const b = Rʹ_a / 9 + Gʹ_a / 9 - 2 * Bʹ_a / 9;
+    const u = Rʹ_a + Gʹ_a + 21 * Bʹ_a / 20;
+    const A = pʹ_2 * cam.N_bb;
+    if (A < 0)
+        throw Error('CIECAM02 breakdown');
+    const h = (math_1.rad2deg * math_1.atan2(b, a) + 360) % 360;
+    const hʹ = (h - cam.h[0]) % 360 + cam.h[0];
+    const e_t = (math_1.cos(math_1.deg2rad * hʹ + 2) + 3.8) / 4;
+    const i = util_1.searchsorted(cam.h, hʹ) - 1;
+    const β = cam.e[i + 1] * (hʹ - cam.h[i]);
+    const H = cam.H[i] + 100 * β / (β + cam.e[i] * (cam.h[i + 1] - hʹ));
+    const J = 100 * (A / cam.A_w) ** (cam.c * cam.z);
+    const sqrt_J_100 = math_1.sqrt(J / 100);
+    const Q = (4 / cam.c) * sqrt_J_100 * (cam.A_w + 4) * cam.F_L ** 0.25;
+    const t = 50000 / 13 * e_t * cam.N_c * cam.N_cb * math_1.hypot(a, b) / (u + 0.305);
+    const α = t ** 0.9 * (1.64 - 0.29 ** cam.n) ** 0.73;
+    const C = α * sqrt_J_100;
+    const M = C * cam.F_L ** 0.25;
+    const s = 50 * math_1.sqrt(cam.c * α / (cam.A_w + 4));
+    return [J, C, H, h, M, s, Q];
+};
