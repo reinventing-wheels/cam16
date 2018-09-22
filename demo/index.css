@@ -1,0 +1,42 @@
+@keyframes rotate {
+  0%   { transform: rotatex(60deg) rotatez(0deg); }
+  100% { transform: rotatex(60deg) rotatez(360deg); }
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  perspective: 200vh;
+  background: #000;
+}
+
+.root {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  animation: rotate 12s linear infinite;
+}
+
+.root * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 61.8vh;
+  height: 61.8vh;
+  transform: translate3d(-50%, -50%, calc(61.8vh * var(--z)));
+  image-rendering: pixelated;
+}
+
+.root :hover {
+  background: rgba(255, 255, 255, .25);
+}
+
+.root :hover ~ * {
+  opacity: 0;
+}
